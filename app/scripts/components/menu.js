@@ -3,6 +3,7 @@
  * 
  */
 import React from 'react';
+import ProductContainer from './productContainer';
 
 class Menu extends React.Component {
 
@@ -13,7 +14,10 @@ class Menu extends React.Component {
     constructor() {
         super();
         this.state = {
-            showingSearch: false
+            showingSearch: false,
+            inputValue: null,
+            timeoutId: null,
+            products: {}
         };
     }
 
@@ -35,11 +39,41 @@ class Menu extends React.Component {
      * @param e [Object] - the event from a text change handler
      */
     onSearch(e) {
-        
-        // Start Here
-        // ...
-        
-
+        const value = e.target.value;
+        this.setState({
+            inputValue: value,
+            products: {}
+        });
+        clearTimeout(this.state.timeoutId);
+        const timeoutId = setTimeout(() => {
+            const data = {
+                value
+            };
+    
+            if (value.length) {
+                fetch('http://localhost:3035/products', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then((response) => {
+                        return response.json()
+                    })
+                    .then((data) => {
+                        console.log('check data');
+                        console.log(data);
+                        this.setState({
+                            products: data
+                        });
+                    })
+            }
+        }, 1000);
+    
+        this.setState({
+            timeoutId
+        });
     }
 
     /**
@@ -74,6 +108,9 @@ class Menu extends React.Component {
                     <a href="#" onClick={(e) => this.showSearchContainer(e)}>
                         <i className="material-icons close">close</i>
                     </a>
+                </div>
+                <div className={(this.state.showingSearch ? "showing " : "") + "product-container"}>
+                    {this.state.products.length > 0 ? <ProductContainer products= { this.state.products }/> : <div/>}
                 </div>
             </header>
         );
